@@ -22,3 +22,4 @@ if( CLANG_TOOLS_EXTRA_INCLUDE_DOCS )
   add_subdirectory(docs)
 endif()
 
+add_subdirectory(clang-typegrind)
