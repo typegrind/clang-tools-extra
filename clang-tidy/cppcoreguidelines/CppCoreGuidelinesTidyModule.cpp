@@ -10,7 +10,8 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
-#include "../misc/AssignOperatorSignatureCheck.h"
+#include "../misc/UnconventionalAssignOperatorCheck.h"
+#include "InterfacesGlobalInitCheck.h"
 #include "ProBoundsArrayToPointerDecayCheck.h"
 #include "ProBoundsConstantArrayIndexCheck.h"
 #include "ProBoundsPointerArithmeticCheck.h"
@@ -21,6 +22,8 @@
 #include "ProTypeStaticCastDowncastCheck.h"
 #include "ProTypeUnionAccessCheck.h"
 #include "ProTypeVarargCheck.h"
+#include "SpecialMemberFunctionsCheck.h"
+#include "SlicingCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -30,6 +33,8 @@ namespace cppcoreguidelines {
 class CppCoreGuidelinesModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.registerCheck<InterfacesGlobalInitCheck>(
+        "cppcoreguidelines-interfaces-global-init");
     CheckFactories.registerCheck<ProBoundsArrayToPointerDecayCheck>(
         "cppcoreguidelines-pro-bounds-array-to-pointer-decay");
     CheckFactories.registerCheck<ProBoundsConstantArrayIndexCheck>(
@@ -50,7 +55,11 @@ public:
         "cppcoreguidelines-pro-type-union-access");
     CheckFactories.registerCheck<ProTypeVarargCheck>(
         "cppcoreguidelines-pro-type-vararg");
-    CheckFactories.registerCheck<misc::AssignOperatorSignatureCheck>(
+    CheckFactories.registerCheck<SpecialMemberFunctionsCheck>(
+        "cppcoreguidelines-special-member-functions");
+    CheckFactories.registerCheck<SlicingCheck>(
+        "cppcoreguidelines-slicing");
+    CheckFactories.registerCheck<misc::UnconventionalAssignOperatorCheck>(
         "cppcoreguidelines-c-copy-assignment-signature");
   }
 };

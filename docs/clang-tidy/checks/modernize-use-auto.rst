@@ -108,7 +108,7 @@ conditions are satisfied:
 
 * The initializer for the variable being declared is not a braced initializer
   list. Otherwise, use of ``auto`` would cause the type of the variable to be
-  deduced as``std::initializer_list``.
+  deduced as ``std::initializer_list``.
 
 New expressions
 ---------------
@@ -124,7 +124,7 @@ pointee type has to be written twice: in the declaration type and in the
 
   // becomes
 
-  auto my_pointer = new TypeName(my_param);
+  auto *my_pointer = new TypeName(my_param);
 
 The check will also replace the declaration type in multiple declarations, if
 the following conditions are satisfied:
@@ -141,12 +141,33 @@ the following conditions are satisfied:
 
   // becomes
 
-  auto my_first_pointer = new TypeName, my_second_pointer = new TypeName;
+  auto *my_first_pointer = new TypeName, *my_second_pointer = new TypeName;
 
 Known Limitations
 -----------------
+
 * If the initializer is an explicit conversion constructor, the check will not
   replace the type specifier even though it would be safe to do so.
 
 * User-defined iterators are not handled at this time.
 
+Options
+-------
+
+.. option:: RemoveStars
+
+   If the option is set to non-zero (default is `0`), the check will remove
+   stars from the non-typedef pointer types when replacing type names with
+   ``auto``. Otherwise, the check will leave stars. For example:
+
+.. code-block:: c++
+
+  TypeName *my_first_pointer = new TypeName, *my_second_pointer = new TypeName;
+
+  // RemoveStars = 0
+
+  auto *my_first_pointer = new TypeName, *my_second_pointer = new TypeName;
+
+  // RemoveStars = 1
+
+  auto my_first_pointer = new TypeName, my_second_pointer = new TypeName;

@@ -10,11 +10,13 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "InefficientStringConcatenationCheck.h"
 
 #include "FasterStringFindCheck.h"
 #include "ForRangeCopyCheck.h"
 #include "ImplicitCastInLoopCheck.h"
 #include "UnnecessaryCopyInitialization.h"
+#include "UnnecessaryValueParamCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -29,8 +31,12 @@ public:
         "performance-for-range-copy");
     CheckFactories.registerCheck<ImplicitCastInLoopCheck>(
         "performance-implicit-cast-in-loop");
+    CheckFactories.registerCheck<InefficientStringConcatenationCheck>(
+        "performance-inefficient-string-concatenation");
     CheckFactories.registerCheck<UnnecessaryCopyInitialization>(
         "performance-unnecessary-copy-initialization");
+    CheckFactories.registerCheck<UnnecessaryValueParamCheck>(
+        "performance-unnecessary-value-param");
   }
 };
 

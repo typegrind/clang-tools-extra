@@ -14,6 +14,7 @@
 
 namespace clang {
 namespace tidy {
+namespace cppcoreguidelines {
 
 /// Checks for usages of static_cast, where a base class is downcasted to a derived class.
 ///
@@ -27,6 +28,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace cppcoreguidelines
 } // namespace tidy
 } // namespace clang
 

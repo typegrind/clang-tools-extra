@@ -156,7 +156,7 @@ bool DeclFinderASTVisitor::VisitTypeLoc(TypeLoc TL) {
 const Expr *digThroughConstructors(const Expr *E) {
   if (!E)
     return nullptr;
-  E = E->IgnoreParenImpCasts();
+  E = E->IgnoreImplicit();
   if (const auto *ConstructExpr = dyn_cast<CXXConstructExpr>(E)) {
     // The initial constructor must take exactly one parameter, but base class
     // and deferred constructors can take more.
@@ -391,8 +391,8 @@ static bool isAliasDecl(ASTContext *Context, const Decl *TheDecl,
     // This check is needed because getMethodDecl can return nullptr if the
     // callee is a member function pointer.
     const auto *MDecl = MemCall->getMethodDecl();
-    if (MDecl && !isa<CXXConversionDecl>(MDecl) && MDecl->getName() == "at" &&
-        MemCall->getNumArgs() == 1) {
+    if (MDecl && !isa<CXXConversionDecl>(MDecl) &&
+        MDecl->getNameAsString() == "at" && MemCall->getNumArgs() == 1) {
       return isIndexInSubscriptExpr(MemCall->getArg(0), IndexVar);
     }
     return false;
@@ -763,7 +763,8 @@ bool ForLoopIndexUseVisitor::VisitDeclRefExpr(DeclRefExpr *E) {
 ///   }
 /// \endcode
 bool ForLoopIndexUseVisitor::TraverseLambdaCapture(LambdaExpr *LE,
-                                                   const LambdaCapture *C) {
+                                                   const LambdaCapture *C,
+                                                   Expr *Init) {
   if (C->capturesVariable()) {
     const VarDecl *VDecl = C->getCapturedVar();
     if (areSameVariable(IndexVar, cast<ValueDecl>(VDecl))) {
@@ -776,7 +777,7 @@ bool ForLoopIndexUseVisitor::TraverseLambdaCapture(LambdaExpr *LE,
                      C->getLocation()));
     }
   }
-  return VisitorBase::TraverseLambdaCapture(LE, C);
+  return VisitorBase::TraverseLambdaCapture(LE, C, Init);
 }
 
 /// \brief If we find that another variable is created just to refer to the loop
@@ -805,6 +806,18 @@ bool ForLoopIndexUseVisitor::VisitDeclStmt(DeclStmt *S) {
 }
 
 bool ForLoopIndexUseVisitor::TraverseStmt(Stmt *S) {
+  // If this is an initialization expression for a lambda capture, prune the
+  // traversal so that we don't end up diagnosing the contained DeclRefExpr as
+  // inconsistent usage. No need to record the usage here -- this is done in
+  // TraverseLambdaCapture().
+  if (const auto *LE = dyn_cast_or_null<LambdaExpr>(NextStmtParent)) {
+    // Any child of a LambdaExpr that isn't the body is an initialization
+    // expression.
+    if (S != LE->getBody()) {
+      return true;
+    }
+  }
+
   // All this pointer swapping is a mechanism for tracking immediate parentage
   // of Stmts.
   const Stmt *OldNextParent = NextStmtParent;
@@ -876,20 +889,6 @@ bool VariableNamer::declarationExists(StringRef Symbol) {
   // Finally, determine if the symbol was used in the loop or a child context.
   DeclFinderASTVisitor DeclFinder(Symbol, GeneratedDecls);
   return DeclFinder.findUsages(SourceStmt);
-}
-
-std::string VariableNamer::AppendWithStyle(StringRef Str,
-                                           StringRef Suffix) const {
-  std::string Name = Str;
-  if (!Suffix.empty()) {
-    if (Style == NS_LowerCase || Style == NS_UpperCase)
-      Name += "_";
-    int SuffixStart = Name.size();
-    Name += Suffix;
-    if (Style == NS_CamelBack)
-      Name[SuffixStart] = toupper(Name[SuffixStart]);
-  }
-  return Name;
 }
 
 } // namespace modernize
